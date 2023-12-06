@@ -32,9 +32,9 @@ SELECT
     (RANDOM() * 100000 + (RANDOM() * 100000)),
     (FLOOR(RANDOM() * 1000) + 1),
     CASE
-        WHEN RANDOM() < 0.3 THEN 'closed'
-        WHEN RANDOM() < 0.6 THEN 'open'
-        ELSE 'draft'
+        WHEN RANDOM() < 0.3 THEN 'closed'::vacancies_status
+        WHEN RANDOM() < 0.6 THEN 'open'::vacancies_status
+        ELSE 'draft'::vacancies_status
     END AS status,
     CURRENT_TIMESTAMP - (RANDOM() * 365 * 5 || ' days')::INTERVAL,
     CURRENT_TIMESTAMP
@@ -46,8 +46,8 @@ SELECT
     'Full Name ' || num,
     (RANDOM() * 99 + 1)::INT,
     CASE
-        WHEN RANDOM() < 0.5 THEN'male'
-        ELSE 'female'
+        WHEN RANDOM() < 0.5 THEN'male'::gender
+        ELSE 'female'::gender
     END AS gender,
     'email' || num || '@example.com',
     LPAD(num::text, 11, '8800'),
@@ -60,16 +60,23 @@ SELECT
 FROM generate_series(1, 100000) AS num;
 
 --Заполняем таблицу Responses
+WITH RandomVacancies AS (
+    SELECT
+        vacancy_id,
+        date_posted + (RANDOM() * INTERVAL '6 week') AS posted
+    FROM Vacancies CROSS JOIN generate_series(1, 10) AS num
+    ORDER BY RANDOM()
+)
 INSERT INTO Responses (vacancy_id, resume_id, status, response_date, last_updated)
 SELECT
-    (FLOOR(RANDOM() * 10000) + 1),
+    rv.vacancy_id,
     (FLOOR(RANDOM() * 100000) + 1),
     CASE
-        WHEN RANDOM() < 0.25 THEN 'pending'
-        WHEN RANDOM() < 0.5 THEN 'responded'
-        WHEN RANDOM() < 0.75 THEN 'rejected'
-        ELSE 'accepted'
+        WHEN RANDOM() < 0.25 THEN 'pending'::responses_status
+        WHEN RANDOM() < 0.5 THEN 'responded'::responses_status
+        WHEN RANDOM() < 0.75 THEN 'rejected'::responses_status
+        ELSE 'accepted'::responses_status
     END AS status,
-    CURRENT_TIMESTAMP - (RANDOM() * 365 * 5 || ' days')::INTERVAL,
+    rv.posted,
     CURRENT_TIMESTAMP
-FROM generate_series(1, 100000) AS num;
+FROM RandomVacancies rv;

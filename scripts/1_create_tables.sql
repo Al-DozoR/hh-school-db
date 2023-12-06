@@ -5,6 +5,9 @@ drop table IF EXISTS cities;
 drop table IF EXISTS areas;
 drop table IF EXISTS resumes;
 drop table IF EXISTS specialization;
+DROP TYPE IF EXISTS vacancies_status;
+DROP TYPE IF EXISTS gender;
+DROP TYPE IF EXISTS responses_status;
 
 -- Создание таблицы регионов
 CREATE TABLE Areas
@@ -29,6 +32,7 @@ CREATE TABLE Specialization
 );
 
 -- Создание таблицы вакансий
+CREATE TYPE vacancies_status AS ENUM ('open', 'closed', 'draft');
 CREATE TABLE Vacancies
 (
     vacancy_id        SERIAL PRIMARY KEY,
@@ -39,19 +43,20 @@ CREATE TABLE Vacancies
     compensation_from NUMERIC CHECK (compensation_from >= 0 OR compensation_from IS NULL),
     compensation_to   NUMERIC CHECK (compensation_from >= 0 OR compensation_from IS NULL),
     specialization_id INT REFERENCES Specialization (specialization_id) NOT NULL,
-    status            VARCHAR(10) NOT NULL CHECK (status IN ('open', 'closed', 'draft')),
+    status            vacancies_status NOT NULL,
     date_posted       TIMESTAMP NOT NULL,
     last_updated      TIMESTAMP NOT NULL
 );
 
 -- Создание таблицы резюме
+CREATE TYPE gender AS ENUM ('male', 'female');
 CREATE TABLE Resumes
 (
     resume_id         SERIAL PRIMARY KEY,
     full_name         VARCHAR(150) NOT NULL,
     age               INT CHECK ((age >= 0 AND age <= 100) OR age IS NULL),
-    gender            VARCHAR(10) NOT NULL CHECK (gender IN ('male', 'female')),
-    email             VARCHAR(100) CHECK ((email ~* '^[A-Za-z0-9._+%-]+@[A-Za-z0-9.-]+[.][A-Za-z]+$') OR email IS NULL),
+    gender            gender NOT NULL,
+    email             VARCHAR(100) NOT NULL,
     phone             VARCHAR(20) NOT NULL,
     experience        TEXT,
     education         TEXT,
@@ -62,12 +67,13 @@ CREATE TABLE Resumes
 );
 
 -- Создание таблицы откликов
+CREATE TYPE responses_status AS ENUM ('pending', 'responded', 'rejected', 'accepted');
 CREATE TABLE Responses
 (
     response_id   SERIAL PRIMARY KEY,
     vacancy_id    INT REFERENCES Vacancies (vacancy_id) NOT NULL,
     resume_id     INT REFERENCES Resumes (resume_id) NOT NULL,
-    status        VARCHAR(10) NOT NULL CHECK (status IN ('pending', 'responded', 'rejected', 'accepted')),
+    status        responses_status NOT NULL,
     response_date TIMESTAMP NOT NULL,
     last_updated  TIMESTAMP NOT NULL
 );
